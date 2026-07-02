@@ -1518,8 +1518,15 @@ function postWebhook(data) {
   // sich in LeadTable leicht als eigene Spalten anlegen/mappen lassen.
   const deumlaut = (s) => String(s).replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss");
   const slug = (s) => deumlaut(s).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
-  j.questions.forEach((q) => { payload["antwort_" + slug(q.short)] = (state.answers[q.short] || {}).label || ""; });
+  j.questions.forEach((q) => {
+    const v = (state.answers[q.short] || {}).label || "";
+    payload[q.short] = v;                     // lesbarer Key = exakt der Feldname zum Anlegen in LeadTable
+    payload["antwort_" + slug(q.short)] = v;  // ASCII-Fallback
+  });
+  payload["Match-Score"] = lead["Qualifikation"];
   payload["match_score"] = lead["Qualifikation"];
+  payload["Wunsch-Kontakt"] = data.contactPref || "Anruf";
+  payload["Kampagne"] = state.variant;
   try {
     fetch(CONFIG.leadWebhookUrl, {
       method: "POST",
