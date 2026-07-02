@@ -829,10 +829,11 @@ const CONFIG = {
   // z. B. später auf eine Mauser-HR-Adresse umstellen)
   leadEmail: "savio.roeckle@wave2network.de",
 
-  // LeadTable-Anbindung: sobald der Webhook eingerichtet ist, hier die URL
-  // eintragen. Leer = kein Webhook (dann geht nur die E-Mail raus). Der Lead
-  // wird zusätzlich als JSON (application/json) an diese URL geschickt.
-  leadWebhookUrl: "",
+  // LeadTable-Anbindung: Lead wird zusätzlich als JSON an diese URL geschickt.
+  // Aktuell: direkter LeadTable-Webhook (text/plain, kein CORS-Preflight).
+  // EMPFOHLEN für Produktion: hier stattdessen die Cloudflare-Worker-Relay-URL
+  // eintragen (siehe leadtable-worker.js) – versteckt den Token & bestätigt die Zustellung.
+  leadWebhookUrl: "https://api.lead-table.com/api/webhook/generic/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0YWJsZUlEIjoiNmEyMmJhNjIyNjE2ZTkyYWQzZTM1OTRiIiwiY3VzdG9tZXJJRCI6IjZhMjJiOWUxMjYxNmU5MmFkM2UzNDJkNCIsImFnZW5jeUlEIjoiNjliZDc3NzVlNGQxN2IzOGVkNjUzZDE2IiwiaWF0IjoxNzgwNjYwODM0fQ.MB0UCIr2DuAVSTt73ItRyHK_b-hO42gvBWGrN-Na1BY",
 
   quelle: "Mauser Karriere-Funnel",
   maxUploadMB: 8, // max. Dateigröße für Lebenslauf-Upload
@@ -1491,11 +1492,27 @@ function collectPayload(data) {
 // parsen den Body trotzdem als JSON.
 function postWebhook(data) {
   if (!CONFIG.leadWebhookUrl) return;
+  const j = state.job;
+  const lead = buildLead(data);
+  // Deutsche Klartext-Keys (für Lesbarkeit) + Standard-Aliase (für automatisches
+  // Field-Mapping in LeadTable/CRM). text/plain vermeidet den CORS-Preflight;
+  // der Empfänger parst den Body trotzdem als JSON.
+  const payload = Object.assign({}, lead, {
+    name: data.name,
+    phone: data.phone,
+    email: data.email || "",
+    zip: data.plz,
+    preferred_contact: data.contactPref || "Anruf",
+    job: `${j.title} ${j.gender}`,
+    variant: state.variant,
+    qualification: lead["Qualifikation"],
+    source: CONFIG.quelle,
+  });
   try {
     fetch(CONFIG.leadWebhookUrl, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=UTF-8" },
-      body: JSON.stringify(buildLead(data)),
+      body: JSON.stringify(payload),
       keepalive: true,
     }).catch(() => {});
   } catch (e) { /* best effort */ }
