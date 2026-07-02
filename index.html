@@ -829,11 +829,11 @@ const CONFIG = {
   // z. B. später auf eine Mauser-HR-Adresse umstellen)
   leadEmail: "savio.roeckle@wave2network.de",
 
-  // LeadTable-Anbindung: Lead wird zusätzlich als JSON an diese URL geschickt.
-  // Aktuell: direkter LeadTable-Webhook (text/plain, kein CORS-Preflight).
-  // EMPFOHLEN für Produktion: hier stattdessen die Cloudflare-Worker-Relay-URL
-  // eintragen (siehe leadtable-worker.js) – versteckt den Token & bestätigt die Zustellung.
-  leadWebhookUrl: "https://api.lead-table.com/api/webhook/generic/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0YWJsZUlEIjoiNmEyMmJhNjIyNjE2ZTkyYWQzZTM1OTRiIiwiY3VzdG9tZXJJRCI6IjZhMjJiOWUxMjYxNmU5MmFkM2UzNDJkNCIsImFnZW5jeUlEIjoiNjliZDc3NzVlNGQxN2IzOGVkNjUzZDE2IiwiaWF0IjoxNzgwNjYwODM0fQ.MB0UCIr2DuAVSTt73ItRyHK_b-hO42gvBWGrN-Na1BY",
+  // LeadTable-Anbindung über den Cloudflare-Worker-Relay (siehe leadtable-worker.js):
+  // Der Worker nimmt den Lead an und leitet ihn serverseitig als application/json an
+  // LeadTable weiter. Vorteil: LeadTable parst das Format sicher, und der LeadTable-
+  // Token bleibt im Worker versteckt (nicht im öffentlichen Quelltext).
+  leadWebhookUrl: "https://leadtable-relay.savio-roeckle.workers.dev/",
 
   quelle: "Mauser Karriere-Funnel",
   maxUploadMB: 8, // max. Dateigröße für Lebenslauf-Upload
