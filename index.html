@@ -1514,6 +1514,12 @@ function postWebhook(data) {
     qualification: lead["Qualifikation"],
     source: CONFIG.quelle,
   });
+  // Antworten zusätzlich mit sauberen Keys (ohne Umlaute/Sonderzeichen), damit sie
+  // sich in LeadTable leicht als eigene Spalten anlegen/mappen lassen.
+  const deumlaut = (s) => String(s).replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss");
+  const slug = (s) => deumlaut(s).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  j.questions.forEach((q) => { payload["antwort_" + slug(q.short)] = (state.answers[q.short] || {}).label || ""; });
+  payload["match_score"] = lead["Qualifikation"];
   try {
     fetch(CONFIG.leadWebhookUrl, {
       method: "POST",
