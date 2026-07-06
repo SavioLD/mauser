@@ -1497,13 +1497,8 @@ function postWebhook(data) {
   // Deutsche Klartext-Keys (für Lesbarkeit) + Standard-Aliase (für automatisches
   // Field-Mapping in LeadTable/CRM). text/plain vermeidet den CORS-Preflight;
   // der Empfänger parst den Body trotzdem als JSON.
-  const parts = (data.name || "").trim().split(/\s+/);
-  const firstName = parts.shift() || "";
-  const lastName = parts.join(" ");
   const payload = Object.assign({}, lead, {
     name: data.name,
-    firstname: firstName, lastname: lastName,
-    first_name: firstName, last_name: lastName,
     phone: data.phone,
     email: data.email || "",
     zip: data.plz,
@@ -1527,6 +1522,9 @@ function postWebhook(data) {
   payload["match_score"] = lead["Qualifikation"];
   payload["Wunsch-Kontakt"] = data.contactPref || "Anruf";
   payload["Kampagne"] = state.variant;
+  // Namensdopplung vermeiden: LeadTables Name-Feld sammelt alle Namens-Keys ein.
+  // Nur der eine `name`-Key soll rein – die deutsche Dublette entfernen.
+  delete payload["Name"];
   try {
     fetch(CONFIG.leadWebhookUrl, {
       method: "POST",
